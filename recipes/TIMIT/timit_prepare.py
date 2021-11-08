@@ -539,3 +539,6 @@ def _check_timit_folders(uppercase, data_folder):
             "the TIMIT dataset)" % (data_folder + train_str)
         )
         raise FileNotFoundError(err_msg)
+
+if __name__ == "__main__":
+    prepare_timit("/mnt/data2/mu/datasets/TIMIT_raw", 'train.json', 'valid.json', 'test.json', uppercase=True)
