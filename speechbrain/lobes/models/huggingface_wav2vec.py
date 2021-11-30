@@ -13,6 +13,7 @@ Authors
 import torch
 import torch.nn.functional as F
 from torch import nn
+import pdb
 
 # We check if transformers is installed.
 try:
@@ -125,7 +126,7 @@ class HuggingFaceWav2Vec2(nn.Module):
             if self.freeze_feature_extractor:
                 self.model.feature_extractor._freeze_parameters()
 
-    def forward(self, wav):
+    def forward(self, wav, attention_mask=None):
         """Takes an input waveform and return its corresponding wav2vec encoding.
 
         Arguments
@@ -137,11 +138,11 @@ class HuggingFaceWav2Vec2(nn.Module):
         # If we freeze, we simply remove all grads and features from the graph.
         if self.freeze:
             with torch.no_grad():
-                return self.extract_features(wav).detach()
+                return self.extract_features(wav, attention_mask).detach()
 
         return self.extract_features(wav)
 
-    def extract_features(self, wav):
+    def extract_features(self, wav, attention_mask=None):
         """Takes an input waveform and return its corresponding wav2vec encoding.
 
         Arguments
@@ -150,11 +151,14 @@ class HuggingFaceWav2Vec2(nn.Module):
             A batch of audio signals to transform to features.
         """
 
-        if self.normalize_wav:
-            wav = F.layer_norm(wav, wav.shape)
+        ## we do not need to perform this layer norm ourselves b/c
+        ## we will use the normalization provided by the processor(feature_extractor) of wav2vec2 model
+        ## That normalizaton was directly applied on the input raw wav
+        # if self.normalize_wav:
+        #     wav = F.layer_norm(wav, wav.shape)
 
         # Extract wav2vec output
-        out = self.model(wav)[0]
+        out = self.model(wav, attention_mask)[0]
 
         # We normalize the output if required
         if self.output_norm:
