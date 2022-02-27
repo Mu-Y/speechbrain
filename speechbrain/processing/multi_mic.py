@@ -279,7 +279,7 @@ class DelaySum(torch.nn.Module):
 
         # Get useful dimensions
         n_fft = Xs.shape[2]
-
+        localization_tensor = localization_tensor.to(Xs.device)
         # Convert the tdoas to taus
         if doa_mode:
             taus = doas2taus(doas=localization_tensor, mics=mics, fs=fs, c=c)
@@ -425,6 +425,10 @@ class Mvdr(torch.nn.Module):
         """
         # Get useful dimensions
         n_fft = Xs.shape[2]
+        localization_tensor = localization_tensor.to(Xs.device)
+        NNs = NNs.to(Xs.device)
+        if mics is not None:
+            mics = mics.to(Xs.device)
 
         # Convert the tdoas to taus
         if doa_mode:
@@ -590,6 +594,10 @@ class Gev(torch.nn.Module):
             The covariance matrices of the noise signal. The tensor must
             have the format (batch, time_steps, n_fft/2 + 1, 2, n_mics + n_pairs).
         """
+
+        # Putting on the right device
+        SSs = SSs.to(Xs.device)
+        NNs = NNs.to(Xs.device)
 
         # Get useful dimensions
         n_mics = Xs.shape[4]
@@ -940,7 +948,7 @@ class SrpPhat(torch.nn.Module):
         n_fft = XXs.shape[2]
 
         # Generate the steering vector
-        As = steering(self.taus, n_fft)
+        As = steering(self.taus.to(XXs.device), n_fft)
 
         # Perform srp-phat
         doas = SrpPhat._srp_phat(XXs=XXs, As=As, doas=self.doas, eps=self.eps)
@@ -967,6 +975,10 @@ class SrpPhat(torch.nn.Module):
             All the possible directions of arrival that will be scanned. The
             tensor must have the format (n_doas, 3).
         """
+
+        # Putting on the right device
+        As = As.to(XXs.device)
+        doas = doas.to(XXs.device)
 
         # Get useful dimensions
         n_mics = As.shape[3]
@@ -1128,7 +1140,7 @@ class Music(torch.nn.Module):
         n_fft = XXs.shape[2]
 
         # Generate the steering vector
-        As = steering(self.taus, n_fft)
+        As = steering(self.taus.to(XXs.device), n_fft)
 
         # Perform music
         doas = Music._music(
@@ -1158,6 +1170,10 @@ class Music(torch.nn.Module):
         n_sig : int
             The number of signals in the signal + noise subspace (default is 1).
         """
+
+        # Putting on the right device
+        As = As.to(XXs.device)
+        doas = doas.to(XXs.device)
 
         # Collecting data
         n_mics = As.shape[3]
@@ -1248,7 +1264,7 @@ def doas2taus(doas, mics, fs, c=343.0):
     >>> taus = doas2taus(doas, mics, fs)
     """
 
-    taus = (fs / c) * torch.matmul(doas, mics.transpose(0, 1))
+    taus = (fs / c) * torch.matmul(doas.to(mics.device), mics.transpose(0, 1))
 
     return taus
 
