@@ -330,7 +330,10 @@ class HuggingFaceWav2Vec2Pretrain(nn.Module):
             True  # We want the hidden states as well!
         )
 
-        self.model = Wav2Vec2ForPreTraining(self.config)
+        # self.model = Wav2Vec2ForPreTraining(self.config)
+        self.model = Wav2Vec2ForPreTraining.from_pretrained(
+            source, cache_dir=save_path
+        )
         self.model.gradient_checkpointing_disable()  # Required by DDP
         self.model.train()
 
