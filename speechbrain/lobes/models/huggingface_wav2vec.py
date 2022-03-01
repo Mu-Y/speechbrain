@@ -237,7 +237,7 @@ class HuggingFaceWav2Vec2(nn.Module):
         err_msg = f"{path} does not contain a .bin or .ckpt checkpoint !"
         raise FileNotFoundError(err_msg)
 
-    def forward(self, wav):
+    def forward(self, wav, attention_mask=None):
         """Takes an input waveform and return its corresponding wav2vec encoding.
 
         Arguments
@@ -249,11 +249,11 @@ class HuggingFaceWav2Vec2(nn.Module):
         # If we freeze, we simply remove all grads and features from the graph.
         if self.freeze:
             with torch.no_grad():
-                return self.extract_features(wav).detach()
+                return self.extract_features(wav, attention_mask=None).detach()
 
-        return self.extract_features(wav)
+        return self.extract_features(wav, attention_mask=None)
 
-    def extract_features(self, wav):
+    def extract_features(self, wav, attention_mask=None):
         """Takes an input waveform and return its corresponding wav2vec encoding.
 
         Arguments
@@ -262,11 +262,11 @@ class HuggingFaceWav2Vec2(nn.Module):
             A batch of audio signals to transform to features.
         """
 
-        if self.normalize_wav:
-            wav = F.layer_norm(wav, wav.shape)
+        # if self.normalize_wav:
+        #     wav = F.layer_norm(wav, wav.shape)
 
         # Extract wav2vec output
-        out = self.model(wav)[0]
+        out = self.model(wav, attention_mask=None)[0]
 
         # We normalize the output if required
         if self.output_norm:
